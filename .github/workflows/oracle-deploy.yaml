@@ -1,7 +1,9 @@
 name: Oracle Deployment
 
 on:
-  #push
+  push:
+    branches:
+      - Dev
   workflow_dispatch:
 
 jobs:
