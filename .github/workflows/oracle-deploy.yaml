@@ -46,7 +46,7 @@ jobs:
           # Implement a polling mechanism here to check for database readiness
           # For example, a loop that checks every few minutes if the database is ready
 
-    - name: Reboot VM
-      run: |
-        ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} 'sudo reboot'
-        sleep 120  # Wait for reboot
+      - name: Reboot VM
+        run: |
+          ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} 'sudo reboot'
+          sleep 120  # Wait for reboot
