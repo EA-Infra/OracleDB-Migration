@@ -1,6 +1,8 @@
 name: Oracle Deployment
 
 on:
+  push:
+    - Dev
   workflow_dispatch:
 
 jobs:
@@ -49,4 +51,4 @@ jobs:
       - name: Reboot VM
         run: |
           ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} 'sudo reboot'
-          sleep 120  # Wait for reboot
+          sleep 20  # Wait for reboot
