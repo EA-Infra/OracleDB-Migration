@@ -1,6 +1,7 @@
 name: Oracle Deployment
 
 on:
+  #push
   workflow_dispatch:
 
 jobs:
