@@ -1,47 +1,55 @@
 name: Oracle Deployment
 
 on:
+  push:
+    branches:
+      - Dev  # Corrected to list format and added hyphen
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Generate SSH Key
-      run: |
-        ssh-keygen -t rsa -b 4096 -f ./id_rsa -N ""
-        echo "PUBLIC_KEY=$(cat ./id_rsa.pub)" >> $GITHUB_ENV
-        mkdir -p ~/.ssh
-        cp ./id_rsa ~/.ssh/
-        chmod 600 ~/.ssh/id_rsa
+      - name: Generate SSH Key
+        run: |
+          ssh-keygen -t rsa -b 4096 -f ./id_rsa -N ""
+          echo "PUBLIC_KEY=$(cat ./id_rsa.pub)" >> $GITHUB_ENV
+          mkdir -p ~/.ssh
+          cp ./id_rsa ~/.ssh/
+          chmod 600 ~/.ssh/id_rsa
 
-    - name: Create VM
-      id: create-vm
-      run: |
-        chmod +x ./scripts/create-vm.sh
-        ./scripts/create-vm.sh "$PUBLIC_KEY"
-        echo "public_ip=$(az network public-ip show -g rg-oracle -n vmoracle19cPublicIP --query ipAddress -o tsv)" >> $GITHUB_OUTPUT
+      - name: Create VM
+        id: create-vm
+        run: |
+          chmod +x ./scripts/create-vm.sh
+          ./scripts/create-vm.sh "$PUBLIC_KEY"
+          public_ip=$(az network public-ip show -g rg-oracle -n vmoracle19cPublicIP --query ipAddress -o tsv)
+          echo "public_ip=$public_ip" >> $GITHUB_ENV
+          echo "::set-output name=public_ip::$public_ip"  # Set the output for use in other steps
 
-    - name: Prepare VM
-      run: |
-        ssh-keyscan ${{ steps.create-vm.outputs.public_ip }} >> ~/.ssh/known_hosts
-        ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} \
-          'bash -s' < ./scripts/prepare-vm.sh ${{ steps.create-vm.outputs.public_ip }}
+      - name: Prepare VM
+        run: |
+          ssh-keyscan ${{ env.public_ip }} >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_rsa azureuser@${{ env.public_ip }} \
+            'bash -s' < ./scripts/prepare-vm.sh ${{ env.public_ip }}
 
-    - name: Create Database
-      run: |
-        ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} \
-          'bash -s' < ./scripts/create-db.sh
+      - name: Create Database
+        timeout-minutes: 60  # Set a timeout of 60 minutes for this step
+        run: |
+          ssh -i ~/.ssh/id_rsa azureuser@${{ env.public_ip }} \
+            'nohup bash -s' < ./scripts/create-db.sh &  # Run as a background process
+          # Implement a polling mechanism here to check for database readiness
+          # For example, a loop that checks every few minutes if the database is ready
 
-    - name: Reboot VM
-      run: |
-        ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} 'sudo reboot'
-        sleep 120  # Wait for reboot
+      - name: Reboot VM
+        run: |
+          ssh -i ~/.ssh/id_rsa azureuser@${{ env.public_ip }} 'sudo reboot'
+          sleep 20  # Wait for reboot
