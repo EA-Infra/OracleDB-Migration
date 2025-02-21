@@ -1,0 +1,47 @@
+name: Oracle Deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Generate SSH Key
+      run: |
+        ssh-keygen -t rsa -b 4096 -f ./id_rsa -N ""
+        echo "PUBLIC_KEY=$(cat ./id_rsa.pub)" >> $GITHUB_ENV
+        mkdir -p ~/.ssh
+        cp ./id_rsa ~/.ssh/
+        chmod 600 ~/.ssh/id_rsa
+
+    - name: Create VM
+      id: create-vm
+      run: |
+        chmod +x ./scripts/create-vm.sh
+        ./scripts/create-vm.sh "$PUBLIC_KEY"
+        echo "public_ip=$(az network public-ip show -g rg-oracle -n vmoracle19cPublicIP --query ipAddress -o tsv)" >> $GITHUB_OUTPUT
+
+    - name: Prepare VM
+      run: |
+        ssh-keyscan ${{ steps.create-vm.outputs.public_ip }} >> ~/.ssh/known_hosts
+        ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} \
+          'bash -s' < ./scripts/prepare-vm.sh ${{ steps.create-vm.outputs.public_ip }}
+
+    - name: Create Database
+      run: |
+        ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} \
+          'bash -s' < ./scripts/create-db.sh
+
+    - name: Reboot VM
+      run: |
+        ssh -i ~/.ssh/id_rsa azureuser@${{ steps.create-vm.outputs.public_ip }} 'sudo reboot'
+        sleep 120  # Wait for reboot
