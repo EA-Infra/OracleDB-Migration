@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-RESOURCE_GROUP="rg-oracle"
+RESOURCE_GROUP="rg-oracle-demo"
 LOCATION="eastus"
-VM_NAME="vmoracle19c"
+VM_NAME="vmoracle19c-demo"
 IMAGE="Oracle:oracle-database-19-3:oracle-database-19-0904:latest"
 VM_SIZE="Standard_DS2_v2"
 ADMIN_USERNAME="azureuser"

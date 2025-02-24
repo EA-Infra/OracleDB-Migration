@@ -1,0 +1,21 @@
+name: Run M360 OEM Extract
+
+on:
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  execute-script:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Execute SQL Script
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+      run: |
+        sudo apt-get install -y sqlcmd # For MSSQL (adjust for MySQL/PostgreSQL)
+        sqlcmd -S $DB_HOST -U $DB_USER -P $DB_PASSWORD -d $DB_NAME -i sql_scripts/M360_OEM_Extract.sql

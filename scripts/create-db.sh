@@ -7,8 +7,8 @@ sudo -u oracle mkdir -p /u02/oradata
 sudo -u oracle dbca -silent \
   -createDatabase \
   -templateName General_Purpose.dbc \
-  -gdbname oratest1 \
-  -sid oratest1 \
+  -gdbname oratest-demo \
+  -sid oratest-demo \
   -responseFile NO_VALUE \
   -characterSet AL32UTF8 \
   -sysPassword OraPasswd1 \
@@ -20,7 +20,7 @@ sudo -u oracle dbca -silent \
   -datafileDestination "/u02/oradata/" \
   -ignorePreReqs
 
-echo "export ORACLE_SID=oratest1" | sudo tee -a ~oracle/.bashrc
+echo "export ORACLE_SID=oratest-demo" | sudo tee -a ~oracle/.bashrc
 
 cat << EOF | sudo tee /etc/init.d/dbora
 #!/bin/sh

@@ -31,7 +31,7 @@ jobs:
         run: |
           chmod +x ./scripts/create-vm.sh
           ./scripts/create-vm.sh "$PUBLIC_KEY"
-          public_ip=$(az network public-ip show -g rg-oracle -n vmoracle19cPublicIP --query ipAddress -o tsv)
+          public_ip=$(az network public-ip show -g rg-oracle-demo -n vmoracle19c-demoPublicIP --query ipAddress -o tsv)
           echo "public_ip=$public_ip" >> $GITHUB_ENV
           echo "::set-output name=public_ip::$public_ip"  # Set the output for use in other steps
 

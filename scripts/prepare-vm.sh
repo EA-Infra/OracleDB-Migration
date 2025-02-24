@@ -2,7 +2,7 @@
 set -e
 
 PUBLIC_IP=$1
-VM_NAME="vmoracle19c"
+VM_NAME="vmoracle19c-demo"
 REGION="eastus"
 
 DISK=$(ls -alt /dev/sd* | head -1 | awk '{print $NF}')
